@@ -3,6 +3,8 @@
 # species.  I'd rather work by bounding box.  
 #
 # Note: I think we can write a script that will then transform and push our data back to the server via the API
+# For more info: https://docs.google.com/document/d/1yNjupricKOAXn6tY1sI7-EwkcfwdGUZ7lxYv7fcPjO8/edit?usp=sharing
+
  
 library(RCurl); library(jsonlite)
 test2 <- getURL("http://www.usanpn.org/npn_portal/stations/getAllStations.json?state_code=MD")
@@ -52,21 +54,35 @@ stat.area <- stat.all[stat.all$latitude<=ymax &
                         stat.all$latitude>=ymin &
                         stat.all$longitude>=xmin &
                         stat.all$longitude<=xmax,]
-
+summary(stat.area)
 
 # Get all data for those stations
-dat1 <- getURL(paste0("http://www.usanpn.org/npn_portal/observations/getObservations.json?",
-                      "station_id[0]=",stat.area$station_id[2],
-                      "&station_id[1]=",stat.area$station_id[3],
-                      "&request_src=", "crollinson_test"))
-dat1 <- jsonlite::fromJSON(dat1)
-dat1$update_datetime <- strptime(dat1$update_datetime, format=c("%F %T"))
+# build a query for all stations in list
+npn.obs.base <- "http://www.usanpn.org/npn_portal/observations/getObservations.json?"
 
-vars.factor <- c("state", "genus", "species", "common_name", "kingdom", "phenophase_description", "intensity_value")
+query.url <- npn.obs.base
+for(i in 1:nrow(stat.area)){
+  query.url <- paste0(query.url, "station_id[", i-1, "]=", stat.area$station_id[i], "&") 
+}
+query.url <- paste0(query.url, "request_src=", "crollinson_test")
+dat1 <- getURL(query.url)
+dat1 <- jsonlite::fromJSON(dat1)
+dat1[dat1=="-9999"] <- NA
+summary(dat1)
+head(dat1)
+# Doing some data formatting
+vars.factor <- c("state", "genus", "species", "common_name", "kingdom", "phenophase_description", "intensity_value", "individual_id", "phenophase_id", "intensity_category_id")
 for(v in vars.factor){
   dat1[,v] <- as.factor(dat1[,v])
 }
 summary(dat1)
+
+# vars.date <- c("update_datetime", "observation_date")
+dat1$update_datetime <- strptime(dat1$update_datetime, format=c("%F %T"))
+dat1$observation_date <- as.Date(dat1$observation_date)
+summary(dat1)
+
+write.csv(dat1, "~/Google Drive/NPN Local Leaders/Calendar/data_export1.csv", row.names=F)
 
 
 
