@@ -54,50 +54,81 @@ summary(dat1)
 
 
 # For my example, lets just work with Quercus macrocarpa from the living collections
-dat.quma <- dat1[dat1$genus=="Quercus" & dat1$species=="macrocarpa" & dat1$site_id=="26202",]
-summary(dat.quma)
+# dat.quma <- dat1[dat1$genus=="Quercus" & dat1$species=="macrocarpa" & dat1$site_id=="26202",]
+dat.quercus <- dat1[dat1$genus=="Quercus" & dat1$site_id=="26202",]
+summary(dat.quercus)
 
 # Aggregating the data by week
 # This is a really ugly hack-job way of doing it & you don't want to do it for VERY large datasets, but it'll be okay
-week.vec <- seq(min(dat.quma$observation_date), max(dat.quma$observation_date), by=7)
-for(i in unique(dat.quma$observation_date)){
-  rows.now <- which(dat.quma$observation_date==i)
+week.vec <- seq(min(dat.quercus$observation_date), max(dat.quercus$observation_date)+7, by=7)
+for(i in as.Date(unique(dat.quercus$observation_date))){
+  rows.now <- which(dat.quercus$observation_date==i)
   
   week.now <- week.vec[which((i-3)<=week.vec & (i+3)>=week.vec)]
   
-  dat.quma[rows.now, "observation_week"] <- paste(week.now)
+  dat.quercus[rows.now, "observation_week"] <- paste(week.now)
   
 }
-dat.quma$observation_week <- as.Date(dat.quma$observation_week)
-summary(dat.quma)
+dat.quercus$observation_week <- as.Date(dat.quercus$observation_week)
+summary(dat.quercus)
 
 # Ordering phenophases to make a bit more sense
-unique(dat.quma$phenophase_description)
-dat.quma$phenophase_description <- factor(dat.quma$phenophase_description, levels=c("Breaking leaf buds", "Increasing leaf size", "Leaves", "Colored leaves", "Falling leaves", "Flowers or flower buds", "Open flowers", "Pollen release (flowers)", "Fruits", "Ripe fruits", "Recent fruit or seed drop"))
+unique(dat.quercus$phenophase_description)
+dat.quercus$phenophase_description <- factor(dat.quercus$phenophase_description, levels=c("Breaking leaf buds", "Increasing leaf size", "Leaves", "Colored leaves", "Falling leaves", "Flowers or flower buds", "Open flowers", "Pollen release (flowers)", "Fruits", "Ripe fruits", "Recent fruit or seed drop"))
 
 # Plotting thigs a bit
-ggplot(data=dat.quma[dat.quma$phenophase_status==1,]) +
+ggplot(data=dat.quercus[dat.quercus$phenophase_status==1,]) +
   facet_grid(phenophase_description~.) +
-  geom_bar(aes(x=observation_week, fill=individual_id))
+  geom_bar(aes(x=observation_week, fill=species))
 
 
 # Doing some summaries to show the fraction of individuals in a phenophase
-dat.quma[dat.quma$phenophase_status==-1, "phenophase_status"] <- NA
-dat.quma2 <- aggregate(dat.quma[,"phenophase_status"], 
-                       by=dat.quma[,c("observation_week", "phenophase_id", "phenophase_description")], 
+dat.quercus[dat.quercus$phenophase_status==-1, "phenophase_status"] <- NA
+dat.quercus2 <- aggregate(dat.quercus[,"phenophase_status"], 
+                       by=dat.quercus[,c("species", "observation_week", "phenophase_id", "phenophase_description")], 
                        FUN=sum)
+summary(dat.quercus2)
 
-summary(dat.quma2)
+# Figuring out how many individuals we have for each species
+spp.summary <- data.frame(species=unique(dat.quercus$species))
+for(i in 1:nrow(spp.summary)){
+  spp.summary[i,"n.ind"] <- length(unique(dat.quercus[dat.quercus$species==spp.summary$species[i], "individual_id"]))
+}
+spp.summary
+
+# merge in the number of individuals
+dat.quercus2 <- merge(dat.quercus2, spp.summary)
+summary(dat.quercus2)
 
 leaves <- c("Breaking leaf buds", "Increasing leaf size", "Leaves", "Colored leaves", "Falling leaves")
 fruits <- c("Flowers or flower buds", "Open flowers", "Pollen release (flowers)", "Fruits", "Ripe fruits", "Recent fruit or seed drop")
-dat.quma2$phenophase_group <- ifelse(dat.quma2$phenophase_description %in% leaves, "leaves", "fruit")
+dat.quercus2$phenophase_group <- ifelse(dat.quercus2$phenophase_description %in% leaves, "leaves", "fruit")
 
 png("~/Google Drive/NPN Local Leaders/Calendar/Calendar_QUMA_Leaves.png", height=8, width=12, unit="in", res=320)
-ggplot(data=dat.quma2[dat.quma2$phenophase_group=="leaves",]) +
-  # facet_grid(phenophase_group~.) +
-  geom_line(aes(x=observation_week, y=x/max(dat.quma2$x, na.rm=T), color=phenophase_description), size=2) +
+ggplot(data=dat.quercus2[dat.quercus2$phenophase_group=="leaves" & dat.quercus2$species=="macrocarpa",]) +
+  facet_grid(species~.) +
+  geom_line(aes(x=observation_week, y=x/n.ind, color=phenophase_description), size=2) +
   scale_color_manual(name="Phenophase", values=c("darkseagreen2", "darkolivegreen2", "forestgreen", "chocolate3", "cornsilk4")) +
   labs(x="Observation Week", y="% Individuals", title="Quercus macrocarpa 2017 leaf phenology") +
+  theme_bw() 
+dev.off()
+
+
+png("~/Google Drive/NPN Local Leaders/Calendar/Calendar_OakCollection_Leaves.png", height=8, width=12, unit="in", res=320)
+ggplot(data=dat.quercus2[dat.quercus2$phenophase_group=="leaves",]) +
+  facet_grid(species~.) +
+  geom_line(aes(x=observation_week, y=x/n.ind, color=phenophase_description), size=2) +
+  scale_color_manual(name="Phenophase", values=c("darkseagreen2", "darkolivegreen2", "forestgreen", "chocolate3", "cornsilk4")) +
+  labs(x="Observation Week", y="% Individuals", title="Oak Collection 2017 leaf phenology") +
+  theme_bw() 
+dev.off()
+
+png("~/Google Drive/NPN Local Leaders/Calendar/Calendar_OakCollection_Leaves2.png", height=8, width=12, unit="in", res=320)
+ggplot(data=dat.quercus2[dat.quercus2$phenophase_group=="leaves" & 
+                           dat.quercus2$species %in% c("alba", "rubra", "macrocarpa", "velutina"),]) +
+  facet_grid(species~.) +
+  geom_line(aes(x=observation_week, y=x/n.ind, color=phenophase_description), size=2) +
+  scale_color_manual(name="Phenophase", values=c("darkseagreen2", "darkolivegreen2", "forestgreen", "chocolate3", "cornsilk4")) +
+  labs(x="Observation Week", y="% Individuals", title="Oak Collection 2017 leaf phenology") +
   theme_bw() 
 dev.off()
