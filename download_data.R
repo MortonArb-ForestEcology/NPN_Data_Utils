@@ -7,9 +7,9 @@
 
  
 library(RCurl); library(jsonlite)
-test2 <- getURL("http://www.usanpn.org/npn_portal/stations/getAllStations.json?state_code=MD")
-test2b <- jsonlite::fromJSON(test2)
-summary(test2b)
+# test2 <- getURL("http://www.usanpn.org/npn_portal/stations/getAllStations.json?state_code=MD")
+# test2b <- jsonlite::fromJSON(test2)
+# summary(test2b)
 
 # To jump straight to data download
 start.date <- "2017-10-01"
@@ -81,11 +81,13 @@ for(i in 1:nrow(stat.area)){
   query.url <- paste0(query.url, "station_id[", i-1, "]=", stat.area$station_id[i], "&") 
 }
 query.url <- paste0(query.url, "request_src=", "crollinson_test")
+
 dat1 <- getURL(query.url)
 dat1 <- jsonlite::fromJSON(dat1)
 dat1[dat1=="-9999"] <- NA
 summary(dat1)
 head(dat1)
+
 # Doing some data formatting
 vars.factor <- c("state", "genus", "species", "common_name", "kingdom", "phenophase_description", "intensity_value", "individual_id", "phenophase_id", "intensity_category_id")
 for(v in vars.factor){
