@@ -1,11 +1,28 @@
-# Trying to figure out how to dynamically query the USA NPN Database form R
-# The RNPN tools seemed a bit too constrictive for me because they assume you know your state or
-# species.  I'd rather work by bounding box.  
-#
-# Note: I think we can write a script that will then transform and push our data back to the server via the API
+# Testing the npn.getObs function with morton arb
 # For more info: https://docs.google.com/document/d/1yNjupricKOAXn6tY1sI7-EwkcfwdGUZ7lxYv7fcPjO8/edit?usp=sharing
 
- 
+library(raster); library(rgdal); library(rgeos)
+library(lubridate)
+
+# Read in the Morton Arb boundaries
+morton <- rgdal::readOGR("/Volumes/GIS/Collections/boundaries/Morton_Arboretum.shp")
+morton <- sp::spTransform(morton, sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")) # convert it to lon/lat
+plot(morton)
+
+
+species <- c("Quercus macrocarpa", "Acer rubrum")
+
+region <- morton
+
+request_src="Rollinson_R_test"
+
+
+
+
+
+
+
+# OLD!
 library(RCurl); library(jsonlite)
 # test2 <- getURL("http://www.usanpn.org/npn_portal/stations/getAllStations.json?state_code=MD")
 # test2b <- jsonlite::fromJSON(test2)
