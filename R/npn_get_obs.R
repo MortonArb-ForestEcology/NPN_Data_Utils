@@ -215,8 +215,9 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species_id=N
                       httr::progress()  
                       )
   dat.obs <- as.data.frame(jsonlite::fromJSON(httr::content(dat.obs, as = "text")))
-  summary(dat.obs)
+  # summary(dat.obs)
   
+  return(dat.obs)
   # -----------------------------------
   
   
