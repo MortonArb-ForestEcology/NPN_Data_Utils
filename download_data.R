@@ -17,8 +17,8 @@ region <- morton
 request_src="Rollinson_R_test"
 
 
-
-
+dat.test <- npn.getObs(region=morton, species=species, request_src=request_src, start_date="2017-05-01", end_date="2017-10-31")
+summary(dat.test)
 
 
 

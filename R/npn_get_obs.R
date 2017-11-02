@@ -41,7 +41,7 @@
 #----------------------------------------------------------------------
 # Begin Function
 #----------------------------------------------------------------------
-npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species_id=NULL, station_id=NULL, species_type=NULL, network=NULL, state=NULL, phenophase_category=NULL, phenophase_id=NULL, functional_type=NULL, additional_field=NULL, climate_data=F, IP_address=NULL, user_email=NULL, request_src="via_R"){
+npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL, station_id=NULL, species_type=NULL, network=NULL, state=NULL, phenophase_category=NULL, phenophase_id=NULL, functional_type=NULL, additional_field=NULL, climate_data=F, IP_address=NULL, user_email=NULL, request_src="via_R"){
   
   # -----------------------------------
   # Working with a particular region
@@ -120,7 +120,7 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species_id=N
   
   ## start_date - (optional) YYYY-MM-DD; first day of interest
   ## end_date - (optional) YYYY-MM-DD; last day of interest to subset stations
-  if(!null(start_date)){
+  if(!is.null(start_date)){
     obs.query[["start_date"]] <- start_date
     obs.query[["end_date"]] <- end_date
   } 
@@ -205,10 +205,10 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species_id=N
   if(climate_data) obs.query[["climate_data"]] <- 1
   
   ## IP_address - (optional) 
-  if(IP_address) obs.query[["IP_address"]] <- IP_address
+  if(!is.null(IP_address)) obs.query[["IP_address"]] <- IP_address
   
   ## user_email - (optional)
-  if(user_email) obs.query[["user_email"]] <- user_email
+  if(!is.null(user_email)) obs.query[["user_email"]] <- user_email
   
   dat.obs = httr::GET(npn.obs.base,
                       query=obs.query,
@@ -216,7 +216,22 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species_id=N
                       )
   dat.obs <- as.data.frame(jsonlite::fromJSON(httr::content(dat.obs, as = "text")))
   # summary(dat.obs)
+  # -----------------------------------
   
+  # -----------------------------------
+  # Do some formatting of the output and return
+  # -----------------------------------
+  # Making factors factors rather than strings
+  vars.factor <- c("state", "genus", "species", "common_name", "kingdom", "phenophase_description", "intensity_value", "individual_id", "phenophase_id", "intensity_category_id", "site_id")
+  for(v in vars.factor){
+    dat.obs[,v] <- as.factor(dat.obs[,v])
+  }
+  
+  # Set up the date/time fields properly
+  dat.obs$update_datetime <- strptime(dat.obs$update_datetime, format=c("%F %T"))
+  dat.obs$observation_date <- as.Date(dat.obs$observation_date)
+  
+  # summary(dat.obs)
   return(dat.obs)
   # -----------------------------------
   
