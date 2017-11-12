@@ -46,6 +46,10 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL
   # -----------------------------------
   # Working with a particular region
   # -----------------------------------
+  latmin=NULL
+  latmax=NULL
+  lonmin=NULL
+  lonmax=NULL
   if(!is.null(region)){
     # pull out our bounding box
     lonmin <- raster::extent(region)[1]
