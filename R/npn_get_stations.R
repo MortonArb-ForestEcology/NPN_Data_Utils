@@ -41,30 +41,52 @@
 #----------------------------------------------------------
 # Begin function
 #----------------------------------------------------------
-npn.getStations <- function(state_code=NULL, person_id=NULL, network_ids=NULL, request_src="via_R"){
+npn.getStations <- function(state_code=NULL, person_id=NULL, network_ids=NULL){
   
-  if(all(is.null(state_code, person_id, network_ids))) warning("Warning: No filter criteria specified; returning ALL Nature's Notebook sites")
+  if(all(is.null(state_code), is.null(person_id), is.null(network_ids))) warning("Warning: No filter criteria specified; returning ALL Nature's Notebook sites")
+  if(length(state_code)>1) stop("Cannot provide more than 1 value to state_code at a time")
+  if(length(person_id)>1) stop("Cannot provide more than 1 value to person_id at a time")
   
   npn.base <- "http://www.usanpn.org/npn_portal/stations/getAllStations.xml?"
   
+  # Note: We can only do 1 state and person at a time, so if we have more than one, we need to loop
   stat.query=list()
   if(!is.null(state_code)) stat.query$state_code=state_code
   if(!is.null(person_id)) stat.query$person_id=person_id
-  if(!is.null(network_ids)) stat.query$network_ids=network_ids
-
+  if(!is.null(network_ids)){
+    for(i in seq_along(network_ids)){
+      stat.query[[paste0("network_ids[", i-1, "]")]]=network_ids[i]
+    }
+  } 
+  
   # download data using httr
   stat.info = httr::GET(npn.base,
                         query = stat.query)
   
   # get station list data; stored as xml
-  stat.xml <- httr::content(stat.info, as = "parsed")
-  # spp.info = httr::GET(spp.base,
-  #                      query = spp.query)
+  stat.xml <- httr::content(stat.info, as="parsed")
+  
+  # Extract the children to clean things up
+  xml.chil <- xml2::xml_children(stat.xml)
   
   
-  # -----------------------------------
-  # 
-  # -----------------------------------
+  # Convert to a data frame
+  stat.df <- data.frame(person_id=person_id, 
+                        station_id=rep(NA, length(xml.chil)),
+                        station_name=rep(NA, length(xml.chil)),
+                        latitude=rep(NA, length(xml.chil)),
+                        longitude=rep(NA, length(xml.chil)),
+                        network_id=rep(NA, length(xml.chil)))
+  
+  for(i in 1:length(xml.chil)){
+    stat.df[i,"station_id"] <- xml2::xml_attrs(xml.chil[[i]])[["station_id"]]
+    stat.df[i,"station_name"] <- xml2::xml_attrs(xml.chil[[i]])[["station_name"]]
+    stat.df[i,"latitude"] <- xml2::xml_attrs(xml.chil[[i]])[["latitude"]]
+    stat.df[i,"longitude"] <- xml2::xml_attrs(xml.chil[[i]])[["longitude"]]
+    stat.df[i,"network_id"] <- xml2::xml_attrs(xml.chil[[i]])[["network_id"]]
+  }
+
+  return(stat.df)
   # -----------------------------------
 }
 #----------------------------------------------------------
