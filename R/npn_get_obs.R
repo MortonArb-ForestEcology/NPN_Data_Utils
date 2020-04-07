@@ -41,7 +41,7 @@
 #----------------------------------------------------------------------
 # Begin Function
 #----------------------------------------------------------------------
-npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL, station_id=NULL, species_type=NULL, network=NULL, state=NULL, phenophase_category=NULL, phenophase_id=NULL, functional_type=NULL, additional_field=NULL, climate_data=F, IP_address=NULL, user_email=NULL, request_src="via_R"){
+npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL, station_id=NULL, species_type=NULL, network=NULL, state=NULL, phenophase_category=NULL, phenophase_id=NULL, functional_type=NULL, additional_field=NULL, climate_data=F, IP_address=NULL, user_email=NULL, request_src="MortonArb_ForEco_via_R"){
   
   # -----------------------------------
   # Working with a particular region
@@ -124,7 +124,17 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL
   
   ## start_date - (optional) YYYY-MM-DD; first day of interest
   ## end_date - (optional) YYYY-MM-DD; last day of interest to subset stations
-  if(!is.null(start_date)){
+  if(any(!is.null(start_date), !is.null(end_date))){
+    # If we didn't specify a start date, use Jan 1 2010
+    if(is.null(start_date)){ 
+      warning("No start specified with end date.  Using 2010-01-01")
+      start_date <- "2010-01-01"
+    }
+    # If we didn't specify and end date, use today
+    if(is.null(end_date)){ 
+      warning(paste("No end specified with start date.  Using today:", Sys.Date()))
+      end_date <- Sys.Date()
+    }
     obs.query[["start_date"]] <- start_date
     obs.query[["end_date"]] <- end_date
   } 
@@ -219,6 +229,11 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL
                       httr::progress()  
                       )
   dat.obs <- as.data.frame(jsonlite::fromJSON(httr::content(dat.obs, as = "text")))
+  
+  if(nrow(dat.obs)==0){
+    warning("No observations available.")
+    return(dat.obs)
+  }
   # summary(dat.obs)
   # -----------------------------------
   
@@ -235,7 +250,10 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL
   dat.obs$update_datetime <- strptime(dat.obs$update_datetime, format=c("%F %T"))
   dat.obs$observation_date <- as.Date(dat.obs$observation_date)
   
+  # Convert -9999 to NA
+  dat.obs[dat.obs == -9999] <- NA
   # summary(dat.obs)
+  
   return(dat.obs)
   # -----------------------------------
   

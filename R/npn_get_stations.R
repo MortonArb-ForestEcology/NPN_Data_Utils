@@ -69,6 +69,18 @@ npn.getStations <- function(state_code=NULL, person_id=NULL, network_ids=NULL){
   # Extract the children to clean things up
   xml.chil <- xml2::xml_children(stat.xml)
   
+  if(length(xml.chil)==0){
+    warning("No Stations for this observer.")
+    
+    stat.df <- data.frame(person_id=person_id, 
+                          station_id=NA,
+                          station_name=NA,
+                          latitude=NA,
+                          longitude=NA,
+                          network_id=NA)
+    
+    return(stat.df)
+  }
   
   # Convert to a data frame
   stat.df <- data.frame(person_id=person_id, 
