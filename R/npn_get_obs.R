@@ -81,9 +81,13 @@ npn.getObs <- function(start_date=NULL, end_date=NULL, region=NULL, species=NULL
       # stat.all[stat.all$latitude<0,"latitude"] <- stat.all[stat.all$latitude<0,"latitude"]*-1
       
       # Convert to a spatial file
-      coordinates(stat.all) <- stat.all[,c("longitude", "latitude")]
-      projection(stat.all) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+      sp::coordinates(stat.all) <- stat.all[,c("longitude", "latitude")]
+      raster::projection(stat.all) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
       # plot(stat.all)
+      # If our region and stations have different CRS, transform
+      if(raster::projection(region)!=raster::projection(stat.all)){
+        region <- sp::spTransform(region, raster::projection(stat.all))
+      }
       
       # Subset our station list to just those inside our polygon
       station_id <- data.frame(stat.all[!is.na(over(stat.all, region)[,1]),])$station_id
