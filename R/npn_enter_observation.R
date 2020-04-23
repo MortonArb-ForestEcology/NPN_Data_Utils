@@ -71,8 +71,11 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
     
   }
   
+  query.string <- c("")
+  for(i in 1:length(dat.put)){
+    query.string <- paste(query.string, paste(names(dat.put)[i], dat.put[i], sep="="), sep="&")
+  }
   
-  httr::PUT(url=npn.base,
-            query=dat.put)
+  httr::PUT(url=paste0(npn.base,query.string))
   
 }
