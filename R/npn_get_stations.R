@@ -69,6 +69,7 @@ npn.getStations <- function(state_code=NULL, person_id=NULL, network_ids=NULL){
   # Extract the children to clean things up
   xml.chil <- xml2::xml_children(stat.xml)
   
+  if(is.null(person_id)) person_id = NA 
   if(length(xml.chil)==0){
     warning("No Stations for this observer.")
     
