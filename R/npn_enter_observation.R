@@ -4,7 +4,7 @@
 ##' @title Enter new NPN individual observation data
 ##' @family Enter NPN data
 ##' @author Christy Rollinson
-##' @description Enter raw observation data TO USA-NPN data web service API
+##' @description Enter raw observation data TO USA-NPN data web service API. Note this requires data to be in 'long' format with the NPN parameters listed as column headers
 # -----------------------------------
 # Notes
 # -----------------------------------
@@ -15,16 +15,15 @@
 ##' @param newdata - data to be intered into NPN
 ##' @param user_id
 ##' @param user_pw
-##' @param access_token -
-##' @param consumer_key - (optional?)
-##' @param phenophase_id - (required)
-##' @param individual_id - (required)
-##' @param observation_date - (required) format YYYY-MM-DD
-##' @param observation_extent - (required) whether the phenophase was observed; 1 = yes; 0 = no; -1 = unsure
-##' @param observation_comment
-##' @param observation_value_id = (optional) categorical abundance value
-##' @param raw_abundance_value
-##' @param 
+##' @param access_token -(alternate)
+##' @param consumer_key - (alternate)
+##' @param phenophase_id - (required in newdata)
+##' @param individual_id - (required in newdata)
+##' @param observation_date - (required in newdata) format YYYY-MM-DD
+##' @param observation_extent - (required in newdata) whether the phenophase was observed; 1 = yes; 0 = no; -1 = unsure
+##' @param observation_comment - string to add to observation comment field
+##' @param observation_value_id = (optional in newdata) categorical abundance value
+##' @param raw_abundance_value = (optional in newdata)
 ##' @export
 # -----------------------------------
 # Outputs
@@ -34,9 +33,8 @@
 # Workflow
 # -----------------------------------
 # -----------------------------------
-# Christy's user id=2342
 
-npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consumer_key, phenophase_id, individual_id, observation_date, observation_extent, observation_comment="Uploaded via R", observation_value_id, raw_abundance_value=NA){
+npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consumer_key, observation_comment="Uploaded via R"){
   if(is.null(user_id))  user_id <- rstudioapi::askForPassword("Enter NPN user ID Number")
 
   if(is.null(user_pw)) user_pw <- rstudioapi::askForPassword("Enter NPN password")
@@ -63,17 +61,17 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
     
     # https://www.usanpn.org/npn_portal/enter_observation/enterObservationSet.xml?user_id=2983&user_pw=XXXX&phenophase_id[0]=183&phenophase_id[1]=184&individual_id=9605&observation_date=2011-02-03&observation_extent[0]=0&observation_extent[1]=1&observation_comment=This_is_a_test
     
-    npn.base <- "https://www.usanpn.org/npn_portal/enter_observation/enterObservationSet.xml?"
+    npn.base <- "https://www-dev.usanpn.org/npn_portal/enter_observation/enterObservationSet.xml?"
     
 
   } else {
-    npn.base <- "https://www.usanpn.org/npn_portal/enterObservation/enterObservation.xml?"
+    npn.base <- "https://www-dev.usanpn.org/npn_portal/enterObservation/enterObservation.xml?"
     
   }
   
   query.string <- c("")
   for(i in 1:length(dat.put)){
-    query.string <- paste(query.string, paste(names(dat.put)[i], dat.put[i], sep="="), sep="&")
+    query.string <- paste(query.string, paste(names(dat.put)[i], dat.put[[i]], sep="="), sep="&")
   }
   
   httr::PUT(url=paste0(npn.base,query.string))
