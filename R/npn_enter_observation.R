@@ -34,7 +34,12 @@
 # -----------------------------------
 # -----------------------------------
 
-npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consumer_key, observation_comment="Uploaded via R"){
+npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consumer_key, observation_comment="Uploaded via R", npn_server="dev"){
+  
+  if(! npn_server %in% c("dev", "production")) {
+    stop(paste0("Invalid server specificaiton.  Only 'dev' and 'production' allowed.  You specified: ", npn_server))
+  }
+    
   if(is.null(user_id))  user_id <- rstudioapi::askForPassword("Enter NPN user ID Number")
 
   if(is.null(user_pw)) user_pw <- rstudioapi::askForPassword("Enter NPN password")
@@ -44,6 +49,20 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
   dat.put$user_pw = user_pw
   
   dat.put$individual_id <- unique(newdata$individual_id)[1]
+  
+  # Formatting the observation comment
+  obs.comment <- newdata$observation_comment[1]
+  if(is.na(obs.comment)){
+    dat.put$observation_comment <- gsub(" ", "%20", observation_comment)
+  } else {
+    obs.comment <- gsub(" ", "%20", obs.comment)
+    obs.comment <- gsub("&", "X", obs.comment)
+    obs.comment <- gsub("=", "X", obs.comment)
+    obs.comment <- gsub("?", "X", obs.comment)
+    
+    dat.put$observation_comment <- obs.comment
+  }
+  
   dat.put$observation_comment <- unique(gsub(" ", "%20", newdata$observation_comment))[1]
   
   # start new observation loop here 
@@ -52,20 +71,21 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
     dat.put[[paste0("phenophase_id[",i-1,"]")]] <- newdata$phenophase_id[i]
     dat.put[[paste0("observation_extent[",i-1,"]")]] <- newdata$observation_extent[i]
     
-    if(!is.na(newdata$observation_value_id[i])) dat.put[[paste0("observation_value_id[",i-1,"]")]] <- newdata$observation_value_id[i]
+    if(!is.na(newdata$observation_value_id[i]) & newdata$observation_value_id[i]!=-9999) dat.put[[paste0("observation_value_id[",i-1,"]")]] <- newdata$observation_value_id[i]
     
   }
   
+  server.url <- ifelse(npn_server=="dev", "https://www-dev.usanpn.org/npn_portal/enter_observation/", "https://www.usanpn.org/npn_portal/enter_observation/")
   
   if(nrow(newdata)>1){
     
     # https://www.usanpn.org/npn_portal/enter_observation/enterObservationSet.xml?user_id=2983&user_pw=XXXX&phenophase_id[0]=183&phenophase_id[1]=184&individual_id=9605&observation_date=2011-02-03&observation_extent[0]=0&observation_extent[1]=1&observation_comment=This_is_a_test
     
-    npn.base <- "https://www-dev.usanpn.org/npn_portal/enter_observation/enterObservationSet.xml?"
-    
+    npn.base <- paste0(server.url, "enterObservationSet.xml?")
 
   } else {
-    npn.base <- "https://www-dev.usanpn.org/npn_portal/enterObservation/enterObservation.xml?"
+    
+    npn.base <- paste0(server.url, "enterObservation.xml?")
     
   }
   
