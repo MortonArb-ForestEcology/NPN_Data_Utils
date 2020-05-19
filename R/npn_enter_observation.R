@@ -71,7 +71,7 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
     dat.put[[paste0("phenophase_id[",i-1,"]")]] <- newdata$phenophase_id[i]
     dat.put[[paste0("observation_extent[",i-1,"]")]] <- newdata$observation_extent[i]
     
-    if(!is.na(newdata$observation_value_id[i]) & newdata$observation_value_id[i]!=-9999) dat.put[[paste0("observation_value_id[",i-1,"]")]] <- newdata$observation_value_id[i]
+    if(!is.na(newdata$observation_value_id[i]) & newdata$observation_value_id[i]!=-9999) dat.put[[paste0("abundance_value_id[",i-1,"]")]] <- newdata$abundance_value_id[i]
     
   }
   
