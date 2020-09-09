@@ -73,7 +73,6 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
     
     if(!is.na(newdata$intensity_id) & newdata$intensity_id!=-9999) dat.put[[paste0("abundance_value_id")]] <- newdata$intensity_id
     
-    
   } else {
     for(i in seq_along(newdata$phenophase_id)){
       dat.put[[paste0("phenophase_id[",i-1,"]")]] <- newdata$phenophase_id[i]
