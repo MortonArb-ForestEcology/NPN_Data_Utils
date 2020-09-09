@@ -22,7 +22,7 @@
 ##' @param observation_date - (required in newdata) format YYYY-MM-DD
 ##' @param observation_extent - (required in newdata) whether the phenophase was observed; 1 = yes; 0 = no; -1 = unsure
 ##' @param observation_comment - string to add to observation comment field
-##' @param observation_value_id = (optional in newdata) categorical abundance value
+##' @param intensity_id = (optional in newdata) categorical intensity code
 ##' @param raw_abundance_value = (optional in newdata)
 ##' @export
 # -----------------------------------
@@ -67,12 +67,20 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
   
   # start new observation loop here 
   dat.put$observation_date <- mean(newdata$observation_date)
-  for(i in seq_along(newdata$phenophase_id)){
-    dat.put[[paste0("phenophase_id[",i-1,"]")]] <- newdata$phenophase_id[i]
-    dat.put[[paste0("observation_extent[",i-1,"]")]] <- newdata$observation_extent[i]
+  if(nrow(newdata)==1){
+    dat.put[[paste0("phenophase_id")]] <- newdata$phenophase_id
+    dat.put[[paste0("observation_extent")]] <- newdata$observation_extent
     
-    if(!is.na(newdata$observation_value_id[i]) & newdata$observation_value_id[i]!=-9999) dat.put[[paste0("abundance_value_id[",i-1,"]")]] <- newdata$abundance_value_id[i]
+    if(!is.na(newdata$intensity_id) & newdata$intensity_id!=-9999) dat.put[[paste0("abundance_value_id")]] <- newdata$intensity_id
     
+    
+  } else {
+    for(i in seq_along(newdata$phenophase_id)){
+      dat.put[[paste0("phenophase_id[",i-1,"]")]] <- newdata$phenophase_id[i]
+      dat.put[[paste0("observation_extent[",i-1,"]")]] <- newdata$observation_extent[i]
+      
+      if(!is.na(newdata$intensity_id[i]) & newdata$intensity_id[i]!=-9999) dat.put[[paste0("abundance_value_id[",i-1,"]")]] <- newdata$intensity_id[i]
+    }
   }
   
   server.url <- ifelse(npn_server=="dev", "https://www-dev.usanpn.org/npn_portal/enter_observation/", "https://www.usanpn.org/npn_portal/enter_observation/")
@@ -84,7 +92,6 @@ npn.putObs <- function(newdata, user_id=NULL, user_pw=NULL, access_token, consum
     npn.base <- paste0(server.url, "enterObservationSet.xml?")
 
   } else {
-    
     npn.base <- paste0(server.url, "enterObservation.xml?")
     
   }
